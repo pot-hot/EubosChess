@@ -7,7 +7,7 @@ class ScoreTracker {
 	private static final int MINIMUM_PLY_FOR_ALPHA_BETA_CUT_OFF = 2;
 
 	ScoreTracker(int searchDepth, boolean isWhite) {
-		scores = new short[searchDepth];
+		scores = new short[searchDepth*2];
 		initialOnMoveIsWhite = isWhite;
 	}
 	

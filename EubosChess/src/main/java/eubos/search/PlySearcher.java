@@ -20,7 +20,7 @@ import eubos.position.IEvaluate;
 public class PlySearcher {
 	
 	public static final int PLIES_PER_MOVE = 2;
-	public static final boolean ENABLE_SEARCH_EXTENSION_FOR_RECAPTURES = false;
+	public static final boolean ENABLE_SEARCH_EXTENSION_FOR_RECAPTURES = true;
 	
 	private IChangePosition pm;
 	private IGenerateMoveList mlgen;
@@ -126,7 +126,9 @@ public class PlySearcher {
 				short positionScore = applyMoveAndScore(currMove);
 				
 				doScoreBackup(currMove, positionScore);
-				updateTranspositionTable(move_iter, ml, st.getBackedUpScoreAtPly(currPly), trans);
+				
+				//if (currPly < searchDepthPly)
+				//	updateTranspositionTable(move_iter, ml, st.getBackedUpScoreAtPly(currPly), trans);
 				
 				if (st.isAlphaBetaCutOff( currPly, provisionalScoreAtPly, positionScore)) {
 					SearchDebugAgent.printRefutationFound(currPly);
@@ -139,9 +141,12 @@ public class PlySearcher {
 	private byte initialiseSearchAtPly() {
 		byte depthRequiredPly = (byte)(searchDepthPly - currPly);
 		st.setProvisionalScoreAtPly(currPly);
+		if (currPly == 0) {
+			SearchDebugAgent.printNewIterationBanner();
+		}
 		SearchDebugAgent.printSearchPly(currPly, st.getProvisionalScoreAtPly(currPly), pos.getOnMove());
 		SearchDebugAgent.printFen(currPly, pos);
-		return depthRequiredPly;
+		return (depthRequiredPly < 0) ? 0 : depthRequiredPly;
 	}
 
 	protected void doScoreBackup(GenericMove currMove, short positionScore) {
@@ -200,8 +205,37 @@ public class PlySearcher {
 		short positionScore;
 		// Either recurse or evaluate a terminal position
 		if ( isTerminalNode() ) {
-			positionScore = scoreTerminalNode();
-			depthSearchedPly = 1;
+			if (ENABLE_SEARCH_EXTENSION_FOR_RECAPTURES) {
+				positionScore = scoreTerminalNode();
+				if (pos.lastMoveWasCapture() && currPly < (this.searchDepthPly*2)) {
+					// If none of the moves are a recapture leave the score as is
+					//positionScore = st.getBackedUpScoreAtPly((byte)(currPly-1));
+					List<GenericMove> extra_ml = mlgen.getMoveList();
+					// look to see if there is a recapture possible
+					// where a recapture is a capture on the old move target square
+					Iterator<GenericMove> move_iter = extra_ml.iterator();
+					boolean anyMoveWasCapture = false;
+					while(move_iter.hasNext()) {
+						GenericMove nextMove = move_iter.next();
+						// DEFECT: this is wrong for en passant captures
+						if (nextMove.to.equals(prevMove.to)) {
+							anyMoveWasCapture = true;
+							positionScore = searchPly();
+							// need to back up the score?
+						}
+					}
+					if (anyMoveWasCapture) {
+						depthSearchedPly = 1;
+					} else {
+						depthSearchedPly++;
+					}
+				} else {
+					depthSearchedPly = 1;
+				}
+			} else {
+				positionScore = scoreTerminalNode();
+				depthSearchedPly = 1;
+			}
 		} else {
 			positionScore = searchPly();
 			depthSearchedPly++;
@@ -215,7 +249,7 @@ public class PlySearcher {
 	
 	private boolean isTerminalNode() {
 		boolean isTerminalNode = false;
-		if (currPly == searchDepthPly) {
+		if (currPly >= searchDepthPly) {
 			isTerminalNode = true;
 		}
 		return isTerminalNode;

@@ -12,7 +12,7 @@ public class MateScoreGenerator implements IScoreMate {
 	
 	public MateScoreGenerator(IPositionAccessors pos, int searchDepth) {
 		this.pos = pos;
-		this.searchDepth = searchDepth;	
+		this.searchDepth = searchDepth*2;	
 	}
 	
 	public short scoreMate(byte currPly, boolean isWhite, Colour initialOnMove) {
@@ -40,7 +40,7 @@ public class MateScoreGenerator implements IScoreMate {
 	
 	short generateScoreForCheckmate(byte currPly) {
 		// Favour earlier mates (i.e. Mate-in-one over mate-in-three) by giving them a larger score.
-		int totalMovesSearched = searchDepth/PLIES_PER_MOVE;
+		int totalMovesSearched = (searchDepth/2)/PLIES_PER_MOVE;
 		int mateMoveNum = (currPly-1)/PLIES_PER_MOVE; // currPly-1 because mate was caused by the move from the previousPly
 		int multiplier = totalMovesSearched-mateMoveNum;
 		return (short)(multiplier*King.MATERIAL_VALUE);

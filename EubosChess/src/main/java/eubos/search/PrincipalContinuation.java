@@ -10,8 +10,8 @@ class PrincipalContinuation {
 	private int searchDepthPly;
 
 	PrincipalContinuation(int searchDepth) {
-		pc = new GenericMove[searchDepth][searchDepth];
-		searchDepthPly = searchDepth;
+		pc = new GenericMove[searchDepth*2][searchDepth*2];
+		searchDepthPly = searchDepth*2;
 	}
 	
 	GenericMove getBestMove() {

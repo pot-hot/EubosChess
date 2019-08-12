@@ -174,4 +174,10 @@ public class SearchDebugAgent {
 			printOutput(indent+"trans mv:"+bestMove.toString()+" dep:"+depthPositionSearchedPly+" sc:"+score+" type:"+bound);
 		}		
 	}
+
+	public static void printNewIterationBanner() {
+		if (isDebugOn) {
+			printOutput("\n\n\n NEW ITERATION\n\n\n");
+		}
+	}
 }

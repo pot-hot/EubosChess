@@ -138,7 +138,7 @@ public class PlySearcher {
 				
 				doScoreBackup(currMove, positionScore);
 				
-				//updateTranspositionTable(move_iter, ml, st.getBackedUpScoreAtPly(currPly), trans);
+				trans = updateTranspositionTableBounded(move_iter, null, st.getBackedUpScoreAtPly(currPly), trans);
 				
 				if (st.isAlphaBetaCutOff( currPly, provisionalScoreAtPly, positionScore)) {
 					SearchDebugAgent.printRefutationFound(currPly);
@@ -166,7 +166,7 @@ public class PlySearcher {
 				
 				doScoreBackup(currMove, positionScore);
 				
-				updateTranspositionTable(move_iter, ml, st.getBackedUpScoreAtPly(currPly), trans);
+				trans = updateTranspositionTable(move_iter, ml, st.getBackedUpScoreAtPly(currPly), trans);
 				
 				if (st.isAlphaBetaCutOff( currPly, provisionalScoreAtPly, positionScore)) {
 					SearchDebugAgent.printRefutationFound(currPly);
@@ -197,14 +197,20 @@ public class PlySearcher {
 		}
 	}
 
-	protected void updateTranspositionTable(Iterator<GenericMove> move_iter, List<GenericMove> ml, short positionScore, Transposition trans) {
+	protected Transposition updateTranspositionTable(Iterator<GenericMove> move_iter, List<GenericMove> ml, short positionScore, Transposition trans) {
 		GenericMove bestMove = (depthSearchedPly == 0) ? null : pc.getBestMove(currPly);
 		ScoreType bound = ScoreType.exact;
 		if (move_iter.hasNext()) {
 			// We haven't searched all the moves yet so this is a bound score
 			bound = (pos.getOnMove() == Colour.white) ? ScoreType.lowerBound : ScoreType.upperBound;
 		}
-		tt.storeTranspositionScore(currPly, depthSearchedPly, bestMove, positionScore, bound, ml, trans);
+		return tt.storeTranspositionScore(currPly, depthSearchedPly, bestMove, positionScore, bound, ml, trans);
+	}
+	
+	protected Transposition updateTranspositionTableBounded(Iterator<GenericMove> move_iter, List<GenericMove> ml, short positionScore, Transposition trans) {
+		GenericMove bestMove = (depthSearchedPly == 0) ? null : pc.getBestMove(currPly);
+		ScoreType bound = (pos.getOnMove() == Colour.white) ? ScoreType.lowerBound : ScoreType.upperBound;
+		return tt.storeTranspositionScore(currPly, depthSearchedPly, bestMove, positionScore, bound, ml, trans);
 	}
 	
 	void reportMove(GenericMove currMove) {
@@ -330,6 +336,9 @@ public class PlySearcher {
 				// If the positionScore indicates a mate, truncate the pc accordingly
 				int matePly = calculatePlyMateOccurredOn();
 				pc.clearAfter(matePly);
+			} else {
+				// clear partial searches for search extension
+				pc.clearAfter(searchDepthPly-1);
 			}
 		}
 		

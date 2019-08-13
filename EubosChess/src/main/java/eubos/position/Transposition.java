@@ -12,7 +12,7 @@ public class Transposition {
 	private List<GenericMove> ml;
 	
 	public List<GenericMove> getMoveList() {
-		if (bestMove != null) {
+		if (ml != null && bestMove != null) {
 			List<GenericMove> ordered_ml = new LinkedList<GenericMove>();
 			ordered_ml.addAll(ml);
 			ordered_ml.remove(bestMove);

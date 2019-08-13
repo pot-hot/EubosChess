@@ -175,9 +175,9 @@ public class SearchDebugAgent {
 		}		
 	}
 
-	public static void printNewIterationBanner() {
+	public static void printNewIterationBanner(int depthRequested) {
 		if (isDebugOn) {
-			printOutput("\n\n\n NEW ITERATION\n\n\n");
+			printOutput("\n\n\n NEW ITERATION to Depth "+depthRequested+"\n\n\n");
 		}
 	}
 }

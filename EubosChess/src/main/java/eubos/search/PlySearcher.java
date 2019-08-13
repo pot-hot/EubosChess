@@ -1,5 +1,6 @@
 package eubos.search;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -78,32 +79,42 @@ public class PlySearcher {
 	private synchronized boolean isTerminated() { return terminate; }	
 	
 	short searchPly() throws InvalidPieceException {
+		return searchPly(null);
+	}
+	
+	short searchPly(GenericMove commandedMove) throws InvalidPieceException {
 		List<GenericMove> ml = null;
 		byte depthRequiredPly = initialiseSearchAtPly();
 		
-		TranspositionEval eval = tt.evaluateTranspositionData(currPly, depthRequiredPly);
-		switch (eval.status) {
-		
-		case sufficientTerminalNode:
-		case sufficientRefutation:
-			depthSearchedPly = eval.trans.getDepthSearchedInPly();
-			pc.initialiseOnTranspositionHit(currPly, eval.trans.getBestMove());
-			doScoreBackup(eval.trans.getBestMove(), eval.trans.getScore());
-			sm.incrementNodesSearched();
-			break;
+		if (commandedMove == null) {
+			TranspositionEval eval = tt.evaluateTranspositionData(currPly, depthRequiredPly);
+			switch (eval.status) {
 			
-		case sufficientSeedMoveList:
-			SearchDebugAgent.printHashIsSeedMoveList(currPly, eval.trans.getBestMove());
-			ml = eval.trans.getMoveList();
-			// Intentional drop through
-		case insufficientNoData:
-			if (ml == null)
-				ml = getMoveList();
-			searchMoves( ml, eval.trans);
-			break;
-			
-		default:
-			break;
+			case sufficientTerminalNode:
+			case sufficientRefutation:
+				depthSearchedPly = eval.trans.getDepthSearchedInPly();
+				pc.initialiseOnTranspositionHit(currPly, eval.trans.getBestMove());
+				doScoreBackup(eval.trans.getBestMove(), eval.trans.getScore());
+				sm.incrementNodesSearched();
+				break;
+				
+			case sufficientSeedMoveList:
+				SearchDebugAgent.printHashIsSeedMoveList(currPly, eval.trans.getBestMove());
+				ml = eval.trans.getMoveList();
+				// Intentional drop through
+			case insufficientNoData:
+				if (ml == null)
+					ml = getMoveList();
+				searchMoves( ml, eval.trans);
+				break;
+				
+			default:
+				break;
+			}
+		} else {
+			ml = new ArrayList<GenericMove>();
+			ml.add(commandedMove);
+			searchMoves( ml, null);
 		}
 		
 		return st.getBackedUpScoreAtPly(currPly);
@@ -127,8 +138,7 @@ public class PlySearcher {
 				
 				doScoreBackup(currMove, positionScore);
 				
-				//if (currPly < searchDepthPly)
-				//	updateTranspositionTable(move_iter, ml, st.getBackedUpScoreAtPly(currPly), trans);
+				updateTranspositionTable(move_iter, ml, st.getBackedUpScoreAtPly(currPly), trans);
 				
 				if (st.isAlphaBetaCutOff( currPly, provisionalScoreAtPly, positionScore)) {
 					SearchDebugAgent.printRefutationFound(currPly);
@@ -142,7 +152,7 @@ public class PlySearcher {
 		byte depthRequiredPly = (byte)(searchDepthPly - currPly);
 		st.setProvisionalScoreAtPly(currPly);
 		if (currPly == 0) {
-			SearchDebugAgent.printNewIterationBanner();
+			SearchDebugAgent.printNewIterationBanner(depthRequiredPly);
 		}
 		SearchDebugAgent.printSearchPly(currPly, st.getProvisionalScoreAtPly(currPly), pos.getOnMove());
 		SearchDebugAgent.printFen(currPly, pos);
@@ -206,11 +216,12 @@ public class PlySearcher {
 		// Either recurse or evaluate a terminal position
 		if ( isTerminalNode() ) {
 			if (ENABLE_SEARCH_EXTENSION_FOR_RECAPTURES) {
+				
 				positionScore = scoreTerminalNode();
+				
 				if (pos.lastMoveWasCapture() && currPly < (this.searchDepthPly*2)) {
-					// If none of the moves are a recapture leave the score as is
-					//positionScore = st.getBackedUpScoreAtPly((byte)(currPly-1));
 					List<GenericMove> extra_ml = mlgen.getMoveList();
+					Colour onMove = pos.getOnMove();
 					// look to see if there is a recapture possible
 					// where a recapture is a capture on the old move target square
 					Iterator<GenericMove> move_iter = extra_ml.iterator();
@@ -219,15 +230,28 @@ public class PlySearcher {
 						GenericMove nextMove = move_iter.next();
 						// DEFECT: this is wrong for en passant captures
 						if (nextMove.to.equals(prevMove.to)) {
+							
 							anyMoveWasCapture = true;
-							positionScore = searchPly();
-							// need to back up the score?
+							
+							short forcedCapturePositionScore = searchPly(nextMove);
+							// was blacks move last
+							if ((onMove==Colour.white) && (forcedCapturePositionScore > positionScore)) {
+								// recaptures are worse for black, so need to take account
+								positionScore = forcedCapturePositionScore;
+							}
+							// was whites last move
+							if ((onMove==Colour.black) && (forcedCapturePositionScore < positionScore)) {
+								// recaptures are worse for white, so need to take account
+								positionScore = forcedCapturePositionScore;
+							}
 						}
 					}
+					// If none of the moves are a recapture leave the score as is
 					if (anyMoveWasCapture) {
-						depthSearchedPly = 1;
+						//depthSearchedPly++;
+						depthSearchedPly =1;
 					} else {
-						depthSearchedPly++;
+						depthSearchedPly=1;
 					}
 				} else {
 					depthSearchedPly = 1;

@@ -18,9 +18,8 @@ class MoveListGenerator {
 		this.pm = pm;
 	}
 	
-	List<GenericMove> createMoveList() throws InvalidPieceException {
+	private List<GenericMove> getAllPossibleMoves() {
 		List<GenericMove> entireMoveList = new ArrayList<GenericMove>();
-		Colour onMove = pm.getOnMove();
 		// For each piece of the "on Move" colour, add it's legal moves to the entire move list
 		Iterator<Piece> iter_p = pm.getTheBoard().iterateColour(pm.getOnMove());
 		while ( iter_p.hasNext() ) {
@@ -28,7 +27,14 @@ class MoveListGenerator {
 			entireMoveList.addAll( currPiece.generateMoves( pm.getTheBoard() ));
 		}
 		pm.castling.addCastlingMoves(entireMoveList);
+		return entireMoveList;
+	}
+	
+	List<GenericMove> createMoveList() throws InvalidPieceException {
+		List<GenericMove> entireMoveList = getAllPossibleMoves();
 		List<GenericMove> newMoveList = new ArrayList<GenericMove>();
+		Colour onMove = pm.getOnMove();
+		
 		Iterator<GenericMove> iter_ml = entireMoveList.iterator();
 		while ( iter_ml.hasNext() ) {
 			GenericMove currMove = iter_ml.next();
@@ -47,5 +53,28 @@ class MoveListGenerator {
 		}
 		entireMoveList = newMoveList;
 		return entireMoveList;
+	}
+	
+	List<GenericMove> getCheckAndCaptureMovesOnly() throws InvalidPieceException {
+		List<GenericMove> entireMoveList = getAllPossibleMoves();
+		Iterator<GenericMove> iter_ml = entireMoveList.iterator();
+		List<GenericMove> justCheckAndCaptures = new ArrayList<GenericMove>();
+		Colour colourOfOppositeKing = Colour.getOpposite(pm.getOnMove());
+		Colour ownColour = Colour.getOpposite(colourOfOppositeKing);
+		while ( iter_ml.hasNext() ) {
+			GenericMove currMove = iter_ml.next();
+			pm.performMove(currMove);
+			// Scratch any moves resulting in the king being in check
+			if (pm.isKingInCheck(ownColour))
+				iter_ml.remove();
+			// Add only checks and captures
+			if (pm.lastMoveWasCapture()) {
+				justCheckAndCaptures.add(currMove);
+			} else if (pm.isKingInCheck(colourOfOppositeKing)) {
+				justCheckAndCaptures.add(currMove);
+			}
+			pm.unperformMove();
+		}
+		return justCheckAndCaptures;
 	}
 }

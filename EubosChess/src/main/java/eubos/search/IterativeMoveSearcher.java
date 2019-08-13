@@ -39,7 +39,7 @@ public class IterativeMoveSearcher extends AbstractMoveSearcher {
 		if (gameTimeRemaining < 60000) {
 			timeQuota = 500;
 		} else if (gameTimeRemaining < 20000){
-			timeQuota = 10;
+			timeQuota = 100;
 		} else {
 			timeQuota = calculateSearchTimeAllocation();
 		}

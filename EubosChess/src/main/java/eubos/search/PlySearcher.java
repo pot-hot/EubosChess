@@ -219,7 +219,7 @@ public class PlySearcher {
 				
 				positionScore = scoreTerminalNode();
 				
-				if (pos.lastMoveWasCapture() && currPly < (this.searchDepthPly*2)) {
+				if (pos.lastMoveWasCapture() && currPly < (this.searchDepthPly+1)) {
 					List<GenericMove> extra_ml = mlgen.getMoveList();
 					Colour onMove = pos.getOnMove();
 					// look to see if there is a recapture possible

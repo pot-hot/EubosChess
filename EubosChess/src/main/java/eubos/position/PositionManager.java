@@ -13,6 +13,7 @@ import eubos.board.InvalidPieceException;
 import eubos.board.Piece;
 import eubos.board.Piece.Colour;
 import eubos.score.IEvaluate;
+import eubos.score.PositionEvaluator;
 import eubos.search.DrawChecker;
 
 public class PositionManager implements IChangePosition, IPositionAccessors {
@@ -22,6 +23,7 @@ public class PositionManager implements IChangePosition, IPositionAccessors {
 		new fenParser( this, fenString );
 		hash = new ZobristHashCode(this, castling);
 		this.dc = dc; 
+		pe = new PositionEvaluator(this);
 	}
 	
 	public PositionManager( String fenString) {
@@ -111,7 +113,7 @@ public class PositionManager implements IChangePosition, IPositionAccessors {
 	}
 	
 	public void performMove( int move, boolean computeHash ) throws InvalidPieceException {
-		if (Move.isPromotion(move) || Move.isPawnCapture(move) || Piece.isPawn(Move.getTargetPiece(move))) {
+		if (pe.isPawnCacheValid() && (Move.isPromotion(move) || Move.isPawnCapture(move) || Piece.isPawn(Move.getTargetPiece(move)))) {
 			pe.invalidatePawnCache();
 		}
 		// Save previous en passant square and initialise for this move
@@ -150,7 +152,7 @@ public class PositionManager implements IChangePosition, IPositionAccessors {
 		CaptureData cap = tm.getCaptureData();
 		
 		int move = tm.getMove();
-		if (Move.isPromotion(move) || Move.isPawnCapture(move) || Piece.isPawn(Move.getTargetPiece(move))) {
+		if (pe.isPawnCacheValid() && (Move.isPromotion(move) || Move.isPawnCapture(move) || Piece.isPawn(Move.getTargetPiece(move)))) {
 			pe.invalidatePawnCache();
 		}
 		
@@ -329,9 +331,9 @@ public class PositionManager implements IChangePosition, IPositionAccessors {
 	}
 
 	IEvaluate pe;
-	
+
 	@Override
-	public void registerPositionEvaluator(IEvaluate pe) {
-		this.pe = pe;
+	public IEvaluate getPositionEvaluator() {
+		return pe;
 	}
 }

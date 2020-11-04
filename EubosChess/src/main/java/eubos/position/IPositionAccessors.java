@@ -14,7 +14,7 @@ public interface IPositionAccessors {
 	public boolean lastMoveWasCheck();
 	public boolean lastMoveWasPromotion();
 	public boolean isPromotionPossible();
-	public CaptureData getCapturedPiece();
+	public int getCaptureData();
 	public long getHash();
 	public String getFen();
 	public boolean isThreefoldRepetitionPossible();

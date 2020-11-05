@@ -36,7 +36,7 @@ class MoveTracker {
 	boolean lastMoveWasCapture() {
 		boolean wasCapture = false;
 		if ( !this.isEmpty()) {
-			wasCapture = this.peek().isCapture();
+			wasCapture = Move.isCapture(stack[index-1].getMove());
 		}
 		return wasCapture;
 	}
@@ -44,7 +44,7 @@ class MoveTracker {
 	boolean lastMoveWasCastle() {
 		boolean wasCastle = false;
 		if ( !this.isEmpty()) {
-			wasCastle = this.peek().isCastle();
+			wasCastle = Move.isCastle(stack[index-1].getMove());
 		}
 		return wasCastle;
 	}
@@ -60,7 +60,7 @@ class MoveTracker {
 	public boolean lastMoveWasPromotion() {
 		boolean wasPromotion = false;
 		if ( !this.isEmpty()) {
-			wasPromotion = Move.isPromotion(this.peek().getMove());
+			wasPromotion = Move.isPromotion(stack[index-1].getMove());
 		}
 		return wasPromotion;
 	}

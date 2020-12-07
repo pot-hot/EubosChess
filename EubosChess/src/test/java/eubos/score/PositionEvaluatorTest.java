@@ -250,7 +250,7 @@ public class PositionEvaluatorTest {
 	@Test
 	public void test_isQuiescent_No_LastMoveWasPromotionBishop() throws InvalidPieceException, IllegalNotationException {
 		setUpPosition("8/4P3/8/8/8/8/8/8 w - - 0 1");
-		int currMove = Move.valueOf(Move.TYPE_PROMOTION_MASK, Position.e7, Piece.WHITE_PAWN, Position.f8, Piece.NONE, Piece.BISHOP);
+		int currMove = Move.valueOf(Move.TYPE_PIECE_PROMOTION_MASK, Position.e7, Piece.WHITE_PAWN, Position.f8, Piece.NONE, Piece.BISHOP);
 		pm.performMove(currMove);
 		assertFalse(SUT.isQuiescent(currMove));
 	}
@@ -258,7 +258,7 @@ public class PositionEvaluatorTest {
 	@Test
 	public void test_isQuiescent_No_LastMoveWasPromotionQueenWithCheckAndCapture() throws InvalidPieceException, IllegalNotationException {
 		setUpPosition("5q2/4P3/7k/8/8/8/8/8 w - - 0 1");
-		int currMove = Move.valueOf(Move.MISC_CHECK_MASK, Move.TYPE_PROMOTION_MASK | Move.TYPE_CAPTURE_MASK, Position.e7, Piece.WHITE_PAWN, Position.f8, Piece.BLACK_QUEEN, Piece.QUEEN);
+		int currMove = Move.valueOf(Move.MISC_CHECK_MASK, Move.TYPE_QUEEN_PROMOTION_MASK | Move.TYPE_CAPTURE_MASK, Position.e7, Piece.WHITE_PAWN, Position.f8, Piece.BLACK_QUEEN, Piece.QUEEN);
 		pm.performMove(currMove);
 		assertFalse(SUT.isQuiescent(currMove));
 	}
@@ -285,7 +285,7 @@ public class PositionEvaluatorTest {
 		setUpPosition("8/4P3/7k/8/8/8/1B6/8 w - - 0 1");
 		PiecewiseEvaluation initialMe = pm.getTheBoard().evaluateMaterial();
 		short initial = initialMe.getDelta();
-		int promotionMove = Move.valueOf(Move.TYPE_PROMOTION_MASK, Position.e7, Piece.WHITE_PAWN, Position.e8, Piece.NONE, Piece.QUEEN);
+		int promotionMove = Move.valueOf(Move.TYPE_QUEEN_PROMOTION_MASK, Position.e7, Piece.WHITE_PAWN, Position.e8, Piece.NONE, Piece.QUEEN);
 		
 		pm.performMove(promotionMove);
 		

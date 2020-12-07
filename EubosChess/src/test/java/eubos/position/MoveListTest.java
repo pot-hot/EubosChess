@@ -76,8 +76,9 @@ public class MoveListTest {
 	public void test_whenPromotionAndPromoteWithCaptureAndCheckPossible() throws InvalidPieceException, IllegalNotationException {
 		setup("q1n5/1P6/8/8/8/8/1K6/7k w - - 0 1 ");
 		Iterator<Integer> it = classUnderTest.iterator();
-		assertEquals(new GenericMove("b7c8q"), Move.toGenericMove(it.next())); // Promotion and capture
-		assertEquals(new GenericMove("b7a8q"), Move.toGenericMove(it.next())); // Promotion with check and capture
+		assertEquals(new GenericMove("b7a8q"), Move.toGenericMove(it.next())); // Promotion and capture
+		assertEquals(new GenericMove("b7c8q"), Move.toGenericMove(it.next())); // Promotion with check and capture
+		assertEquals(new GenericMove("b7b8q"), Move.toGenericMove(it.next())); // Promotion
 		
 		assertEquals(new GenericMove("b7c8r"), Move.toGenericMove(it.next())); // Promotion (piece) and capture
 		assertEquals(new GenericMove("b7a8r"), Move.toGenericMove(it.next())); // Promotion (piece) and capture
@@ -85,7 +86,6 @@ public class MoveListTest {
 		assertEquals(new GenericMove("b7a8b"), Move.toGenericMove(it.next())); // Promotion (piece) and capture
 		assertEquals(new GenericMove("b7c8n"), Move.toGenericMove(it.next())); // Promotion (piece) and capture
 		assertEquals(new GenericMove("b7a8n"), Move.toGenericMove(it.next())); // Promotion (piece) and capture
-		assertEquals(new GenericMove("b7b8q"), Move.toGenericMove(it.next())); // Promotion
 		assertEquals(new GenericMove("b7b8r"), Move.toGenericMove(it.next())); // Promotion (piece)
 		assertEquals(new GenericMove("b7b8b"), Move.toGenericMove(it.next())); // Promotion (piece)
 		assertEquals(new GenericMove("b7b8n"), Move.toGenericMove(it.next())); // Promotion (piece)
@@ -177,22 +177,26 @@ public class MoveListTest {
 		setup("1n6/P3kP2/8/1Pp2P2/8/8/8/8 w - c6 0 1");
 		Iterator<Integer> it = classUnderTest.iterator();
 		
-		// Promotions with capture
+		// Queen Promotions with capture
 		assertEquals(new GenericMove("a7b8q"), Move.toGenericMove(it.next())); // Queen promotion with capture, PxN
+		assertEquals(new GenericMove("f7f8q"), Move.toGenericMove(it.next())); // Queen promotion (with check)
+		assertEquals(new GenericMove("a7a8q"), Move.toGenericMove(it.next())); // Queen promotion
+		
+		// Captures with Piece Promotions
 		assertEquals(new GenericMove("a7b8r"), Move.toGenericMove(it.next())); // Rook promotion with capture, PxN
 		assertEquals(new GenericMove("a7b8b"), Move.toGenericMove(it.next())); // Bishop promotion with capture, PxN
 		assertEquals(new GenericMove("a7b8n"), Move.toGenericMove(it.next())); // Knight promotion with capture, PxN
-		assertEquals(new GenericMove("f7f8q"), Move.toGenericMove(it.next())); // Queen promotion (with check)
-		assertEquals(new GenericMove("a7a8q"), Move.toGenericMove(it.next())); // Queen promotion
+		
+		// Captures
+		assertEquals(new GenericMove("b5c6"), Move.toGenericMove(it.next())); // En Passant capture, PxP
+		
+		// Piece Promotions
 		assertEquals(new GenericMove("f7f8r"), Move.toGenericMove(it.next())); // Rook promotion
 		assertEquals(new GenericMove("a7a8r"), Move.toGenericMove(it.next())); // Rook promotion
 		assertEquals(new GenericMove("f7f8b"), Move.toGenericMove(it.next())); // Bishop promotion (with check)
 		assertEquals(new GenericMove("a7a8b"), Move.toGenericMove(it.next())); // Bishop promotion
 		assertEquals(new GenericMove("f7f8n"), Move.toGenericMove(it.next())); // Knight promotion
 		assertEquals(new GenericMove("a7a8n"), Move.toGenericMove(it.next())); // Knight promotion
-		
-		// Captures
-		assertEquals(new GenericMove("b5c6"), Move.toGenericMove(it.next())); // En Passant capture, PxP
 				
 		// Regular moves
 		assertEquals(new GenericMove("b5b6"), Move.toGenericMove(it.next())); // Regular pawn move

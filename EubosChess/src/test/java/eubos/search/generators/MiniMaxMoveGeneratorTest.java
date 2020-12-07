@@ -483,6 +483,7 @@ public class MiniMaxMoveGeneratorTest {
 	}
 	
 	@Test
+	@Ignore // deliberately not searching losing captures for the time-being
 	public void test_extendedSearch_recaptureBishopLeadsToLossOfMaterial() throws InvalidPieceException, IllegalNotationException, NoLegalMoveException {
 		setupPosition("8/6q1/5p2/8/8/2B5/8/8 w - - 0 38 ");
 		expectedMove = new GenericMove("c3f6");

@@ -65,7 +65,6 @@ public class MoveList implements Iterable<Integer> {
 				// Check whether to set the best move - note it could be the same as one of the killers
 				boolean isBest = validBest && Move.areEqualForBestKiller(currMove, bestMove);
 				if (isBest) {
-					currMove = Move.setBest(currMove);
 					bestMove = currMove;
 					validBest = false; // as already found
 					foundBest = true;
@@ -100,9 +99,9 @@ public class MoveList implements Iterable<Integer> {
 			pm.unperformMove(false);
 		}
 		// Sort the list
+		Collections.sort(normal_search_moves, Move.mvvLvaComparator);
 		if (foundBest)
 			normal_search_moves.add(0, bestMove);
-		Collections.sort(normal_search_moves, Move.mvvLvaComparator);
 	}
 	
 	@Override
@@ -116,7 +115,7 @@ public class MoveList implements Iterable<Integer> {
 			// Lazy creation of extended move list
 			extended_search_moves = new ArrayList<Integer>(normal_search_moves.size());
 			for (int currMove : normal_search_moves) {
-				if (Move.isCapture(currMove) || Move.isCheck(currMove) || Move.isQueenPromotion(currMove)) {
+				if (Move.isWinningOrEqualCapture(currMove) || Move.isCheck(currMove)) {
 					extended_search_moves.add(currMove);
 				}
 			}

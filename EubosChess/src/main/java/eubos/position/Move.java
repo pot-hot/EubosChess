@@ -31,19 +31,19 @@ public final class Move {
 	
 	// Move ordering
 	public static final int TYPE_REGULAR_NONE = 0;
-	public static final int TYPE_KILLER_BIT = 0;
-	public static final int TYPE_CAPTURE_BIT = 1;
-	public static final int TYPE_PROMOTION_BIT = 2;
-	public static final int TYPE_BEST_BIT = 3;
-	public static final int TYPE_WIDTH = TYPE_BEST_BIT + 1;
+	public static final int TYPE_PIECE_PROMOTION_BIT = 0;
+	public static final int TYPE_KILLER_BIT = 1;
+	public static final int TYPE_CAPTURE_BIT = 2;
+	public static final int TYPE_QUEEN_PROMOTION_BIT = 3;
+	public static final int TYPE_WIDTH = TYPE_QUEEN_PROMOTION_BIT + 1;
 
+	public static final int TYPE_PIECE_PROMOTION_MASK = (0x1 << TYPE_PIECE_PROMOTION_BIT);
 	public static final int TYPE_KILLER_MASK = (0x1 << TYPE_KILLER_BIT);
 	public static final int TYPE_CAPTURE_MASK = (0x1 << TYPE_CAPTURE_BIT);
-	public static final int TYPE_PROMOTION_MASK = (0x1 << TYPE_PROMOTION_BIT);
-	public static final int TYPE_BEST_MASK = (0x1 << TYPE_BEST_BIT);
+	public static final int TYPE_QUEEN_PROMOTION_MASK = (0x1 << TYPE_QUEEN_PROMOTION_BIT);
 	
-	public static final int MOVE_ORDERING_MASK = (TYPE_KILLER_MASK | TYPE_CAPTURE_MASK | TYPE_PROMOTION_MASK | TYPE_BEST_MASK);
-	public static final int KILLER_EXCLUSION_MASK = (TYPE_CAPTURE_MASK | TYPE_PROMOTION_MASK | TYPE_BEST_MASK);
+	public static final int MOVE_ORDERING_MASK = (TYPE_KILLER_MASK | TYPE_CAPTURE_MASK | TYPE_QUEEN_PROMOTION_MASK | TYPE_PIECE_PROMOTION_MASK);
+	public static final int KILLER_EXCLUSION_MASK = (TYPE_CAPTURE_MASK | TYPE_QUEEN_PROMOTION_MASK);
 	
 	private static final int TYPE_SHIFT = TARGET_PIECE_SHIFT + Long.bitCount(Piece.PIECE_WHOLE_MASK);
 	private static final int TYPE_MASK = ((1<<TYPE_WIDTH)-1) << TYPE_SHIFT;
@@ -290,7 +290,7 @@ public final class Move {
 		if (move.promotion != null) {
 			promotion = Piece.convertChessmanToPiece(IntChessman.valueOf(move.promotion), false);
 			promotion &= Piece.PIECE_NO_COLOUR_MASK;
-			intMove = Move.valueOf(Move.TYPE_PROMOTION_MASK, originPosition, originPiece, targetPosition, targetPiece, promotion);
+			intMove = Move.valueOf((Piece.isQueen(promotion)) ? Move.TYPE_QUEEN_PROMOTION_MASK : Move.TYPE_PIECE_PROMOTION_MASK, originPosition, originPiece, targetPosition, targetPiece, promotion);
 		} else {
 			intMove = Move.valueOf(misc, type, originPosition, originPiece, targetPosition, targetPiece, promotion);
 		}
@@ -306,7 +306,7 @@ public final class Move {
 	}
 	
 	public static boolean isPromotion(int move) {
-		return (move & (Move.TYPE_PROMOTION_MASK << TYPE_SHIFT)) != 0;
+		return (move & ((Move.TYPE_QUEEN_PROMOTION_MASK|Move.TYPE_PIECE_PROMOTION_MASK) << TYPE_SHIFT)) != 0;
 	}
 	
 	public static boolean isCapture(int move) {
@@ -465,7 +465,7 @@ public final class Move {
             if (type1 < type2) {
             	return 1;
             } else if (type1 == type2) {
-            	boolean isPromotion = (type1 & (Move.TYPE_PROMOTION_MASK << Move.TYPE_SHIFT)) != 0;
+            	boolean isPromotion = (type1 & (Move.TYPE_PIECE_PROMOTION_MASK << Move.TYPE_SHIFT)) != 0;
             	if (isPromotion) {
             		// Note, promotion captures are always winning by definition, no need to check that
             		return Move.comparePromotions(move1, move2);
@@ -556,7 +556,7 @@ public final class Move {
 	}
 
 	public static boolean isQueenPromotion(int move) {
-		return (((move & (Move.TYPE_PROMOTION_MASK) << TYPE_SHIFT) != 0) && Piece.isQueen(Move.getPromotion(move)));
+		return (move & (Move.TYPE_QUEEN_PROMOTION_MASK) << TYPE_SHIFT) != 0;
 	}
 	
 	public static boolean isPawnCapture(int move) {
@@ -575,15 +575,17 @@ public final class Move {
 		return (move |= (Move.TYPE_KILLER_MASK << TYPE_SHIFT));
 	}
 	
-	public static int setBest(int move) {
-		return (move |= (Move.TYPE_BEST_MASK << TYPE_SHIFT));
-	}
-
 	public static boolean isEnPassantCapture(int move) {
 		return (move & Move.MISC_EN_PASSANT_CAPTURE_MASK) != 0;
 	}
 
 	public static boolean isNotBestCaptureOrPromotion(int move) {
 		return (move & (Move.KILLER_EXCLUSION_MASK << Move.TYPE_SHIFT)) == 0;
+	}
+	
+	public static boolean isWinningOrEqualCapture(int move) {
+    	int victim = MATERIAL[Move.getTargetPieceNoColour(move)];
+    	int attacker = MATERIAL[Move.getOriginPieceNoColour(move)];
+    	return (victim-attacker) >= 0;
 	}
 }

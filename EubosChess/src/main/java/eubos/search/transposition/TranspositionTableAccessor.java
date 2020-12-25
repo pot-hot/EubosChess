@@ -52,6 +52,7 @@ public class TranspositionTableAccessor implements ITranspositionAccessor {
 				is_created = true;
 				sda.printCreateTrans(pos.getHash());
 				trans = new_trans;
+				sda.printTransUpdate(trans, pos.getHash());
 			} else {
 				trans = old_trans;
 			}

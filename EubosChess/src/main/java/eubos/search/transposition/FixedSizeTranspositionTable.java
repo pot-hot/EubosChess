@@ -144,6 +144,8 @@ public class FixedSizeTranspositionTable {
 		if (old_trans == null) {
 			// Only increment size if hash wasn't already contained, otherwise overwrites
 			hashMapSize++;
+		} else {
+			trans = old_trans;
 		}
 		incrementAccessCount(trans);
 		return old_trans;

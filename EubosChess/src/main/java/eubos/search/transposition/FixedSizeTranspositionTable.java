@@ -134,16 +134,19 @@ public class FixedSizeTranspositionTable {
 		}
 	}
 	
-	public void putTransposition(long hashCode, ITransposition trans) {
+	public ITransposition putTransposition(long hashCode, ITransposition trans) {
+		ITransposition old_trans = null;
 		if (hashMapSize >= maxHashMapSize) {
 			// Remove the oldest 20% of hashes to make way for this one
 			removeLeastUsed();
 		}
-		if (hashMap.put(hashCode, trans) == null) {
+		old_trans = hashMap.putIfAbsent(hashCode, trans);
+		if (old_trans == null) {
 			// Only increment size if hash wasn't already contained, otherwise overwrites
 			hashMapSize++;
 		}
 		incrementAccessCount(trans);
+		return old_trans;
 	}
 	
 	public short getHashUtilisation() {

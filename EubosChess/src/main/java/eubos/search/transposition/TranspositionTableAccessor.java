@@ -40,12 +40,20 @@ public class TranspositionTableAccessor implements ITranspositionAccessor {
 	public ITransposition setTransposition(ITransposition trans, byte new_Depth, short new_score, byte new_bound, int new_bestMove, List<Integer> pv) {
 		boolean is_created = false;
 		if (trans == null) {
-			// Needed, because we want to merge this transposition with that of other threads, not to lose their effort.
-			// Read, modify, write, otherwise we blindly update the transposition table, potentially overwriting other thread's Transposition object.
-			trans = hashMap.getTransposition(pos.getHash());
-			if (trans == null) {
-				trans = createTranpositionAddToTable(new_Depth, new_score, new_bound, new_bestMove, pv);
+			ITransposition new_trans;
+			if (USE_PRINCIPAL_VARIATION_TRANSPOSITIONS) {
+				new_trans = new PrincipalVariationTransposition(new_Depth, new_score, new_bound, new_bestMove, pv);
+			} else {
+				new_trans= new Transposition(new_Depth, new_score, new_bound, new_bestMove, null);
+			}
+			// Atomic update of transposition table that will get the previous trans if it exists in the map
+			ITransposition old_trans = hashMap.putTransposition(pos.getHash(), new_trans);
+			if (old_trans == null) {
 				is_created = true;
+				sda.printCreateTrans(pos.getHash());
+				trans = new_trans;
+			} else {
+				trans = old_trans;
 			}
 		}
 		if (!is_created) {
@@ -55,18 +63,5 @@ public class TranspositionTableAccessor implements ITranspositionAccessor {
 			}
 		}
 		return trans;
-	}
-	
-	private ITransposition createTranpositionAddToTable(byte new_Depth, short new_score, byte new_bound, int new_bestMove, List<Integer> pv) {
-		ITransposition new_trans;
-		sda.printCreateTrans(pos.getHash());
-		if (USE_PRINCIPAL_VARIATION_TRANSPOSITIONS) {
-			new_trans = new PrincipalVariationTransposition(new_Depth, new_score, new_bound, new_bestMove, pv);
-		} else {
-			new_trans= new Transposition(new_Depth, new_score, new_bound, new_bestMove, null);
-		}
-		hashMap.putTransposition(pos.getHash(), new_trans);
-		sda.printTransUpdate(new_trans, pos.getHash());
-		return new_trans;
 	}
 }

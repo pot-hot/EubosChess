@@ -20,6 +20,12 @@ public class PieceList {
 	//private byte [][] piece_count = new byte [NUM_COLOURS][NUM_PIECE_TYPES];
 	
 	private Board theBoard;
+	private queen_pos qp;
+	private rook_pos rp;
+	private bishop_pos bp;
+	private knight_pos kp;
+	private white_pawn_pos wpp;
+	private black_pawn_pos bpp;
 	
 	public PieceList(Board theBoard) {
 		for (int [][] side : piece_list) {
@@ -28,6 +34,12 @@ public class PieceList {
 			}
 		}
 		this.theBoard = theBoard;
+		qp = new queen_pos();
+		rp = new rook_pos();
+		bp = new bishop_pos();
+		kp = new knight_pos();
+		wpp = new white_pawn_pos();
+		bpp = new black_pawn_pos();
 	}
 	
 	public void addPiece(int piece, int atPos) {
@@ -176,6 +188,42 @@ public class PieceList {
 		}
 	}
 	
+	class queen_pos implements IComputePositionScore {
+		public byte op(int atSquare) {
+			return (byte)(theBoard.getNumEmptyAllDirectSquares(atSquare)*2);
+		}
+	}
+	
+	class rook_pos implements IComputePositionScore {
+		public byte op(int atSquare) {
+			return (byte)(theBoard.getNumEmptyRankFileSquares(atSquare)*2);
+		}
+	}
+	
+	class bishop_pos implements IComputePositionScore {
+		public byte op(int atSquare) {
+			return (byte)(theBoard.getNumEmptyDiagonalSquares(atSquare)*2);
+		}
+	}
+	
+	class knight_pos implements IComputePositionScore {
+		public byte op(int atSquare) {
+			return Board.KNIGHT_WEIGHTINGS[atSquare];
+		}
+	}
+	
+	class white_pawn_pos implements IComputePositionScore {
+		public byte op(int atSquare) {
+			return Board.PAWN_WHITE_WEIGHTINGS[atSquare];
+		}
+	}
+	
+	class black_pawn_pos implements IComputePositionScore {
+		public byte op(int atSquare) {
+			return Board.PAWN_BLACK_WEIGHTINGS[atSquare];
+		}
+	}
+	
 	public void evaluateMaterialBalanceAndPieceMobility(boolean isWhite) {
 		int [][] side = piece_list[isWhite ? 0 : 1];
 		//boolean isWhite = true;
@@ -187,43 +235,38 @@ public class PieceList {
 					theBoard.me.addPosition(isWhite, theBoard.isEndgame ? Board.KING_ENDGAME_WEIGHTINGS[atSquare] : Board.KING_MIDGAME_WEIGHTINGS[atSquare]);
 				}
 			}
-			for(int atSquare : side[Piece.QUEEN]) {
-				if (atSquare != Position.NOPOSITION) {			
-					theBoard.me.addPiece(isWhite, Piece.QUEEN);
-					if (!theBoard.isEndgame)
-						theBoard.me.addPosition(isWhite, (byte)(theBoard.getNumEmptyAllDirectSquares(atSquare)*2));
-				} else break;
-			}
-			for(int atSquare : side[Piece.ROOK]) {
-				if (atSquare != Position.NOPOSITION) {			
-					theBoard.me.addPiece(isWhite, Piece.ROOK);
-					if (!theBoard.isEndgame)
-						theBoard.me.addPosition(isWhite, (byte)(theBoard.getNumEmptyRankFileSquares(atSquare)*2));
-				} else break;
-			}
-			for(int atSquare : side[Piece.BISHOP]) {
-				if (atSquare != Position.NOPOSITION) {			
-					theBoard.me.addPiece(isWhite, Piece.BISHOP);
-					if (!theBoard.isEndgame)
-						theBoard.me.addPosition(isWhite, (byte)(theBoard.getNumEmptyDiagonalSquares(atSquare)*2));
-				} else break;
-			}
-			for(int atSquare : side[Piece.KNIGHT]) {
-				if (atSquare != Position.NOPOSITION) {			
-					theBoard.me.addPiece(isWhite, Piece.KNIGHT);
-					if (!theBoard.isEndgame)
-						theBoard.me.addPosition(isWhite, Board.KNIGHT_WEIGHTINGS[atSquare]);
-				} else break;
-			}
-			for(int atSquare : side[Piece.PAWN]) {
-				if (atSquare != Position.NOPOSITION) {			
-					theBoard.me.addPiece(isWhite, Piece.PAWN);
-					if (!theBoard.isEndgame)
-						theBoard.me.addPosition(isWhite, isWhite ? Board.PAWN_WHITE_WEIGHTINGS[atSquare] : Board.PAWN_BLACK_WEIGHTINGS[atSquare]);
-				} else break;
-			}
+			
+			//IComputePositionScore queen_pos = (atSquare) -> ((byte)(theBoard.getNumEmptyAllDirectSquares(atSquare)*2));
+			extracted(isWhite, Piece.QUEEN, side, qp);
+			
+			//IComputePositionScore rook_pos = (atSquare) -> ((byte)(theBoard.getNumEmptyRankFileSquares(atSquare)*2));
+			extracted(isWhite, Piece.ROOK, side, rp);
+			
+			//IComputePositionScore bishop_pos = (atSquare) -> ((byte)(theBoard.getNumEmptyDiagonalSquares(atSquare)*2));
+			extracted(isWhite, Piece.BISHOP, side, bp);
+			
+			//IComputePositionScore knight_pos = (atSquare) -> (Board.KNIGHT_WEIGHTINGS[atSquare]);
+			extracted(isWhite, Piece.KNIGHT, side, kp);
+			
+			//IComputePositionScore pawn_pos = isWhite ? (atSquare) -> (Board.PAWN_WHITE_WEIGHTINGS[atSquare]) : (atSquare) -> (Board.PAWN_BLACK_WEIGHTINGS[atSquare]);
+			extracted(isWhite, Piece.PAWN, side, isWhite ? wpp : bpp);
+			
 			//isWhite = !isWhite;
 		//}
+	}
+	
+	public interface IComputePositionScore {
+	    public byte op(int a);
+	}
+
+	private void extracted(boolean isWhite, int piece, int[][] side, IComputePositionScore lambda) {
+		for(int atSquare : side[piece]) {
+			if (atSquare != Position.NOPOSITION) {			
+				theBoard.me.addPiece(isWhite, piece);
+				if (!theBoard.isEndgame)
+					theBoard.me.addPosition(isWhite, lambda.op(atSquare));
+			} else break;
+		}
 	}
 	
 	public void forEachPawnOfSideDoCallback(IForEachPieceCallback caller, boolean sideIsBlack) {

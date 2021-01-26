@@ -98,34 +98,33 @@ public class ZobristHashCode implements IForEachPieceCallback {
 	}
 	
 	// Used to update the Zobrist hash code whenever a position changes due to a move being performed
-	public void update(int move, int capturedPieceSquare, int enPassantFile) {
-		int piece = Move.getOriginPiece(move);
-		doBasicMove(move, piece);
-		doCapturedPiece(Move.getTargetPiece(move), capturedPieceSquare);
+	public void update(int move, int pieceToMove, boolean isWhite, int originSquare, int targetSquare, int targetPiece, int promotedPiece, int capturedPieceSquare, int enPassantFile) {
+		int piece = pieceToMove;
+		doBasicMove(originSquare, targetSquare, promotedPiece, piece, isWhite);
+		doCapturedPiece(targetPiece, capturedPieceSquare);
 		doEnPassant(enPassantFile);
      	doSecondaryMove(move, piece);
 		doCastlingFlags();
 		doOnMove();
 	}
 	
-	protected void doBasicMove(int move, int piece) {
-		int promotedChessman = Move.getPromotion(move);
-		if (promotedChessman == Piece.NONE) {
+	protected void doBasicMove(int originSquare, int targetSquare, int promotedPiece, int piece, boolean isWhite) {
+		if (promotedPiece == Piece.NONE) {
 			// Basic move only
-			hashCode ^= getPrnForPiece(Move.getTargetPosition(move), piece);
-			hashCode ^= getPrnForPiece(Move.getOriginPosition(move), piece);
+			hashCode ^= getPrnForPiece(targetSquare, piece);
+			hashCode ^= getPrnForPiece(originSquare, piece);
 		} else {
 			// Promotion
-			int promotedPiece = Piece.isWhite(piece) ? promotedChessman : Piece.BLACK|promotedChessman;
-			if ((Position.getRank(Move.getTargetPosition(move)) == IntRank.R1) ||
-				(Position.getRank(Move.getTargetPosition(move)) == IntRank.R8)) {
+			promotedPiece = isWhite ? promotedPiece : Piece.BLACK|promotedPiece;
+			if ((Position.getRank(targetSquare) == IntRank.R1) ||
+				(Position.getRank(targetSquare) == IntRank.R8)) {
 				// is doing a promotion
-				hashCode ^= getPrnForPiece(Move.getTargetPosition(move), promotedPiece);
-				hashCode ^= getPrnForPiece(Move.getOriginPosition(move), piece);
+				hashCode ^= getPrnForPiece(targetSquare, promotedPiece);
+				hashCode ^= getPrnForPiece(originSquare, piece);
 			} else {
 				// is undoing promotion
-				hashCode ^= getPrnForPiece(Move.getTargetPosition(move), piece);
-				hashCode ^= getPrnForPiece(Move.getOriginPosition(move), promotedPiece);
+				hashCode ^= getPrnForPiece(targetSquare, piece);
+				hashCode ^= getPrnForPiece(originSquare, promotedPiece);
 			}
 		}
 	}

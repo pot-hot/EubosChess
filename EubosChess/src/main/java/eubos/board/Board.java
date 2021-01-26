@@ -262,14 +262,8 @@ public class Board {
 		return fen.toString();
 	}
 	
-	public int doMove(int move) throws InvalidPieceException {
+	public int doMove(int move, int pieceToMove, boolean isWhite, int originSquare, int targetSquare, int targetPiece, int promotedPiece) throws InvalidPieceException {
 		int capturePosition = Position.NOPOSITION;
-		int pieceToMove = Move.getOriginPiece(move);
-		boolean isWhite = Piece.isWhite(pieceToMove);
-		int originSquare = Move.getOriginPosition(move);
-		int targetSquare = Move.getTargetPosition(move);
-		int targetPiece = Move.getTargetPiece(move);
-		int promotedPiece = Move.getPromotion(move);
 		long initialSquareMask = BitBoard.positionToMask_Lut[originSquare];
 		long targetSquareMask = BitBoard.positionToMask_Lut[targetSquare];
 		long positionsMask = initialSquareMask | targetSquareMask;
@@ -318,14 +312,8 @@ public class Board {
 		return capturePosition;
 	}
 	
-	public int undoMove(int moveToUndo) throws InvalidPieceException {
+	public int undoMove(int moveToUndo, int originPiece, boolean isWhite, int originSquare, int targetSquare, int targetPiece, int promotedPiece) throws InvalidPieceException {
 		int capturedPieceSquare = Position.NOPOSITION;
-		int originPiece = Move.getOriginPiece(moveToUndo);
-		boolean isWhite = Piece.isWhite(originPiece);
-		int originSquare = Move.getOriginPosition(moveToUndo);
-		int targetSquare = Move.getTargetPosition(moveToUndo);
-		int targetPiece = Move.getTargetPiece(moveToUndo);
-		int promotedPiece = Move.getPromotion(moveToUndo);
 		long initialSquareMask = BitBoard.positionToMask_Lut[originSquare];
 		long targetSquareMask = BitBoard.positionToMask_Lut[targetSquare];
 		long positionsMask = initialSquareMask | targetSquareMask;
